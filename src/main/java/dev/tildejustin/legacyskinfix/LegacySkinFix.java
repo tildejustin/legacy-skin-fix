@@ -1,10 +1,8 @@
 package dev.tildejustin.legacyskinfix;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.Validate;
 import org.spongepowered.include.com.google.gson.Gson;
 
 import java.io.IOException;
@@ -17,16 +15,15 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LegacySkinFix implements ClientModInitializer {
-    public static MinecraftClient client = MinecraftClient.getInstance();
+public class LegacySkinFix {
+    public static final String UsernameToUUID = "https://api.mojang.com/users/profiles/minecraft/";
+    public static Minecraft client = Minecraft.getMinecraft();
     public static Map<Type, String> skins = new HashMap<>();
-    public final String UsernameToUUID = "https://api.mojang.com/users/profiles/minecraft/";
 
-    @Override
-    public void onInitializeClient() {
+    public static void initialize() {
         String uuid;
         try {
-            uuid = performGetRequest(UsernameToUUID + client.getSession().getUsername());
+            uuid = performGetRequest(UsernameToUUID + client.session.username);
         } catch (IOException e) {
             System.out.println("could not resolve player UUID");
             return;
@@ -51,8 +48,7 @@ public class LegacySkinFix implements ClientModInitializer {
         skins.put(Type.CAPE, profileTextures.CAPE.url);
     }
 
-    protected HttpURLConnection createUrlConnection(URL url) throws IOException {
-        Validate.notNull(url);
+    protected static HttpURLConnection createUrlConnection(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
         connection.setConnectTimeout(15000);
         connection.setReadTimeout(15000);
@@ -60,8 +56,7 @@ public class LegacySkinFix implements ClientModInitializer {
         return connection;
     }
 
-    public String performGetRequest(String url) throws IOException {
-        Validate.notNull(url);
+    public static String performGetRequest(String url) throws IOException {
         HttpURLConnection connection = createUrlConnection(new URL(url));
 
 

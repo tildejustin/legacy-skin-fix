@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.Base64;
@@ -21,13 +20,21 @@ import java.util.Map;
 public class LegacySkinFix implements ClientModInitializer {
     public static MinecraftClient client = MinecraftClient.getInstance();
     public static Map<Type, String> skins = new HashMap<>();
-    final URL texturesURL = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + client.getSession().getUuid().replace("-", ""));
-
-    public LegacySkinFix() throws MalformedURLException {
-    }
+    public final String UsernameToUUID = "https://api.mojang.com/users/profiles/minecraft/";
 
     @Override
     public void onInitializeClient() {
+        String uuid;
+        try {
+            uuid = performGetRequest(UsernameToUUID + client.getSession().getUsername());
+        } catch (IOException e) {
+            System.out.println("could not resolve player UUID");
+            return;
+        }
+        uuid = new Gson().fromJson(new StringReader(uuid), MinecraftProfileUsernameResponse.class).id;
+
+        final String texturesURL = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid;
+
         String result;
         try {
             result = performGetRequest(texturesURL);
@@ -53,9 +60,9 @@ public class LegacySkinFix implements ClientModInitializer {
         return connection;
     }
 
-    public String performGetRequest(URL url) throws IOException {
+    public String performGetRequest(String url) throws IOException {
         Validate.notNull(url);
-        HttpURLConnection connection = createUrlConnection(url);
+        HttpURLConnection connection = createUrlConnection(new URL(url));
 
 
         InputStream inputStream = null;

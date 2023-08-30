@@ -23,6 +23,6 @@
     "legacy-skin-fix.mixins.json"
   ],
   "depends": {
-    "minecraft": ">=1.7 <=1.7.6-pre2"
+    "minecraft": ">=1.6 <=1.6.4"
   }
 }

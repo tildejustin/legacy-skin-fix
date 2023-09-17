@@ -11,26 +11,17 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
 public class LegacySkinFix {
-    public static final String UsernameToUUID = "https://api.mojang.com/users/profiles/minecraft/";
     public static Minecraft client = Minecraft.getMinecraft();
     public static Map<Type, String> skins = new HashMap<>();
 
     public static void initialize() {
-        String uuid;
-        try {
-            uuid = performGetRequest(UsernameToUUID + client.session.username);
-        } catch (IOException e) {
-            System.out.println("could not resolve player UUID");
-            return;
-        }
-        uuid = new Gson().fromJson(new StringReader(uuid), MinecraftProfileUsernameResponse.class).id;
-
-        final String texturesURL = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid;
+        final String texturesURL = "https://sessionserver.mojang.com/session/minecraft/profile/" + client.session.field_1048.split(":")[client.session.field_1048.split(":").length - 1].replace("-", "");
 
         String result;
         try {
@@ -63,13 +54,13 @@ public class LegacySkinFix {
         InputStream inputStream = null;
         try {
             inputStream = connection.getInputStream();
-            return IOUtils.toString(inputStream, Charsets.UTF_8);
+            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
         } catch (IOException e) {
             IOUtils.closeQuietly(inputStream);
             inputStream = connection.getErrorStream();
 
             if (inputStream != null) {
-                return IOUtils.toString(inputStream, Charsets.UTF_8);
+                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             } else {
                 throw e;
             }

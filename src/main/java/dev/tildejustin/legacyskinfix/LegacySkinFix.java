@@ -2,9 +2,7 @@ package dev.tildejustin.legacyskinfix;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.MinecraftClient;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.Validate;
 import org.spongepowered.include.com.google.gson.Gson;
 
 import java.io.IOException;
@@ -13,27 +11,20 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 public class LegacySkinFix implements ClientModInitializer {
     public static MinecraftClient client = MinecraftClient.getInstance();
-    public static Map<Type, String> skins = new HashMap<>();
-    public final String UsernameToUUID = "https://api.mojang.com/users/profiles/minecraft/";
+    public static String skinUrl;
+    public static String capeUrl;
 
     @Override
     public void onInitializeClient() {
-        String uuid;
-        try {
-            uuid = performGetRequest(UsernameToUUID + client.getSession().getUsername());
-        } catch (IOException e) {
-            System.out.println("could not resolve player UUID");
-            return;
-        }
-        uuid = new Gson().fromJson(new StringReader(uuid), MinecraftProfileUsernameResponse.class).id;
-
-        final String texturesURL = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid;
+        final String[] token = client.getSession().getSessionId().split(":");
+        final String texturesURL = "https://sessionserver.mojang.com/session/minecraft/profile/"
+                + token[token.length - 1].replace("-", "");
 
         String result;
         try {
@@ -42,39 +33,36 @@ public class LegacySkinFix implements ClientModInitializer {
             System.out.println("Could not get profile texture(s)");
             return;
         }
-        MinecraftProfilePropertiesResponse.MinecraftProfileProperties properties = new Gson().fromJson(new StringReader(result), MinecraftProfilePropertiesResponse.class).properties[0];
+        MinecraftProfilePropertiesResponse.MinecraftProfileProperties properties =
+                new Gson().fromJson(new StringReader(result), MinecraftProfilePropertiesResponse.class).properties[0];
         ProfileTexturesResponse.ProfileTextures profileTextures = new Gson().fromJson(
                 new StringReader(new String(Base64.getDecoder().decode(properties.value))),
                 ProfileTexturesResponse.class
         ).textures;
-        skins.put(Type.SKIN, profileTextures.SKIN.url);
-        skins.put(Type.CAPE, profileTextures.CAPE.url);
+
+        skinUrl = profileTextures.SKIN.url;
+        capeUrl = profileTextures.CAPE.url;
     }
 
-    protected HttpURLConnection createUrlConnection(URL url) throws IOException {
-        Validate.notNull(url);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
-        connection.setConnectTimeout(15000);
-        connection.setReadTimeout(15000);
-        connection.setUseCaches(false);
-        return connection;
+    public static Optional<String> getSkin() {
+        return Optional.ofNullable(skinUrl);
     }
 
-    public String performGetRequest(String url) throws IOException {
-        Validate.notNull(url);
+    public static Optional<String> getCape() {
+        return Optional.ofNullable(capeUrl);
+    }
+
+    public static String performGetRequest(String url) throws IOException {
         HttpURLConnection connection = createUrlConnection(new URL(url));
-
-
         InputStream inputStream = null;
         try {
             inputStream = connection.getInputStream();
-            return IOUtils.toString(inputStream, Charsets.UTF_8);
+            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
         } catch (IOException e) {
             IOUtils.closeQuietly(inputStream);
             inputStream = connection.getErrorStream();
-
             if (inputStream != null) {
-                return IOUtils.toString(inputStream, Charsets.UTF_8);
+                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             } else {
                 throw e;
             }
@@ -83,8 +71,11 @@ public class LegacySkinFix implements ClientModInitializer {
         }
     }
 
-    public enum Type {
-        SKIN,
-        CAPE
+    protected static HttpURLConnection createUrlConnection(URL url) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(15000);
+        connection.setUseCaches(false);
+        return connection;
     }
 }

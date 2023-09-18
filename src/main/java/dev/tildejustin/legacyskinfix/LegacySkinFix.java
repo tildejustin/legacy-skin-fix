@@ -1,18 +1,16 @@
 package dev.tildejustin.legacyskinfix;
 
 import net.minecraft.client.Minecraft;
-import org.apache.commons.io.IOUtils;
 import org.spongepowered.include.com.google.gson.Gson;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class LegacySkinFix {
     public static Minecraft client = Minecraft.getMinecraft();
@@ -55,17 +53,20 @@ public class LegacySkinFix {
         InputStream inputStream = null;
         try {
             inputStream = connection.getInputStream();
-            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                    .lines()
+                    .collect(Collectors.joining("\n"));
         } catch (IOException e) {
-            IOUtils.closeQuietly(inputStream);
             inputStream = connection.getErrorStream();
             if (inputStream != null) {
-                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                        .lines()
+                        .collect(Collectors.joining("\n"));
             } else {
                 throw e;
             }
         } finally {
-            IOUtils.closeQuietly(inputStream);
+            if (inputStream != null) inputStream.close();
         }
     }
 

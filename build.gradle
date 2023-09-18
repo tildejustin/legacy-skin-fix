@@ -19,7 +19,6 @@ dependencies {
 	minecraft "com.mojang:minecraft:$minecraft_version"
 	mappings(legacy.yarn(minecraft_version, yarn_build))
 	modImplementation "net.fabricmc:fabric-loader:$loader_version"
-	include(implementation("commons-io:commons-io:2.13.0"))
 }
 
 processResources {

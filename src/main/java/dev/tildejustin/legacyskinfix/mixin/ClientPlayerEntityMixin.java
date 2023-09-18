@@ -18,16 +18,12 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
     }
 
     @Inject(method = "<init>", at = @At(value = "TAIL"))
-    private void getSkinUrlInject(Minecraft world, World session, Session i, int par4, CallbackInfo ci) {
-        if (LegacySkinFix.skins.get(LegacySkinFix.Type.SKIN) != null) {
-            this.skinUrl = LegacySkinFix.skins.get(LegacySkinFix.Type.SKIN);
-        }
+    private void setSkinUrl(Minecraft world, World session, Session i, int par4, CallbackInfo ci) {
+        LegacySkinFix.getSkin().ifPresent((skinUrl) -> this.skinUrl = skinUrl);
     }
 
     @Inject(method = "method_2510", at = @At(value = "TAIL"))
-    private void getCapeUrlInject(CallbackInfo ci) {
-        if (LegacySkinFix.skins.get(LegacySkinFix.Type.CAPE) != null) {
-            this.field_3236 = this.field_4008 = LegacySkinFix.skins.get(LegacySkinFix.Type.CAPE);
-        }
+    private void setCapeUrl(CallbackInfo ci) {
+        LegacySkinFix.getCape().ifPresent((capeUrl) -> this.field_3236 = this.field_4008 = capeUrl);
     }
 }

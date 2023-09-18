@@ -3,7 +3,7 @@
   "id": "legacy-skin-fix",
   "version": "${version}",
   "name": "Legacy Skin Fix",
-  "description": "",
+  "description": "modern skin loading on legacy versions",
   "authors": [
     "tildejustin"
   ],
